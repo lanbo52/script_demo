@@ -1,0 +1,1302 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>电商口播脚本生成器</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #121821;
+      --accent: #3b82f6;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --border: #1f2937;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --yellow: #f59e0b;
+      /* Glassmorphism variables */
+      --glass-bg: rgba(17, 25, 40, 0.46);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --glass-shadow: 0 10px 30px rgba(2, 8, 23, 0.50);
+      --glass-blur: 16px;
+      --glass-sat: 190%;
+      --glass-highlight: rgba(255, 255, 255, 0.08);
+      /* Liquid Glass tint & inner shadow */
+      --glass-tint: rgba(59,130,246,0.10);
+      --glass-inner-shadow: rgba(2,8,23,0.55);
+      --text-strong: #f1f5f9;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0b0f14, #0e141b 40%, #0b0f14);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Microsoft YaHei", "PingFang SC", "Noto Sans", sans-serif;
+    }
+
+    .app {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+    }
+
+    /* Ambient blobs for refraction feel */
+    .app::before,
+    .app::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      pointer-events: none;
+      filter: blur(80px);
+    }
+    .app::before {
+      top: -20vh;
+      left: -10vw;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(35% 35% at 25% 25%, rgba(59, 130, 246, 0.25), rgba(0,0,0,0));
+    }
+    .app::after {
+      right: -10vw;
+      bottom: -25vh;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(35% 35% at 75% 75%, rgba(34, 197, 94, 0.18), rgba(0,0,0,0));
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .subnote { color: var(--yellow); font-size:12px; margin-left:8px; }
+
+    .panel {
+      position: relative;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 16px;
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+      box-shadow: var(--glass-shadow);
+      overflow: hidden;
+    }
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 60%),
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+      mix-blend-mode: screen;
+    }
+
+    /* Liquid Glass tint + inner shadow layer */
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        radial-gradient(140% 140% at 30% 20%, var(--glass-tint), rgba(255,255,255,0)),
+        radial-gradient(120% 120% at 70% 80%, rgba(255,255,255,0.06), rgba(255,255,255,0));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -18px 40px var(--glass-inner-shadow);
+      mix-blend-mode: soft-light;
+    }
+
+    .section { margin-bottom: 14px; }
+    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; display:flex; align-items:center; gap:8px }
+    .section-title .emoji { font-size: 18px; }
+
+    .input, textarea, select {
+      width: 100%;
+      background: var(--glass-bg);
+      color: var(--text);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+      box-shadow: var(--glass-shadow);
+    }
+    /* Enhanced rounded style for native select */
+    select {
+      min-height: 40px;
+      line-height: normal;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-color: var(--glass-bg);
+      /* Custom caret icon */
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="%239aa4b2" d="M7 10l5 5 5-5"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px 16px;
+      padding-right: 36px; /* room for caret */
+      padding-top: 8px;
+      padding-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+    select:hover { border-color: rgba(255,255,255,0.22); }
+    .input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(59,130,246,0.45); box-shadow: 0 0 0 1.5px rgba(59,130,246,0.25), var(--glass-shadow); }
+    .input.error { border-color: rgba(239,68,68,0.75); box-shadow: 0 0 0 1.5px rgba(239,68,68,0.35), var(--glass-shadow); animation: field-flash .6s ease; }
+    select.error, textarea.error { border-color: rgba(239,68,68,0.75); box-shadow: 0 0 0 1.5px rgba(239,68,68,0.35), var(--glass-shadow); animation: field-flash .6s ease; }
+    select:disabled { opacity: .6; cursor: not-allowed; }
+    select option { background: rgba(17,25,40,0.92); color: var(--text); }
+    .badge { display: inline-block; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--muted); margin-left: 6px; vertical-align: middle; }
+    .badge.required { color: var(--yellow); }
+    .badge.optional { color: var(--muted); }
+    /* Notification Toast */
+    .toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 10px 12px; border-radius: 8px; backdrop-filter: saturate(180%) blur(8px); background: rgba(17,25,40,0.82); color: var(--text); box-shadow: 0 6px 22px rgba(2,8,23,0.45); display: flex; align-items: center; gap: 8px; border: 1px solid var(--glass-border); opacity: 0; transform: translateY(-8px); pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); transition: opacity 160ms ease, transform 160ms ease; }
+    .toast .icon { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(220,38,38,0.22); color: #fecaca; font-weight: 600; }
+    .toast.error { border-color: rgba(220,38,38,0.35); }
+    .toast .msg { font-size: 14px; }
+    @keyframes field-flash { 0% { box-shadow: 0 0 0 2px rgba(239,68,68,.45), var(--glass-shadow); } 60% { box-shadow: 0 0 0 1px rgba(239,68,68,.25), var(--glass-shadow); } 100% { box-shadow: var(--glass-shadow); } }
+    textarea { min-height: 160px; resize: vertical; }
+
+    .token-input { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-height: 40px; }
+    .token-input-field { flex:1; min-width: 140px; background: transparent; border:none; color: var(--text); outline: none; padding: 0; }
+
+    .btn {
+      background: linear-gradient(180deg, rgba(59,130,246,0.28), rgba(59,130,246,0.20));
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.16);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+      box-shadow: 0 6px 16px rgba(2,8,23,0.35);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .btn:hover { transform: translateY(-0.5px); box-shadow: 0 10px 24px rgba(2,8,23,0.42); }
+    .btn:active { transform: translateY(0); box-shadow: 0 6px 16px rgba(2,8,23,0.35); }
+    .btn.secondary { background: var(--glass-bg); border: 1px solid var(--glass-border); }
+    .btn.ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); }
+    .btn.small { padding: 6px 10px; font-size: 12px; }
+    .btn:disabled { opacity:.65; cursor:not-allowed; }
+
+    .label { font-size: 12px; color: #cbd5e1; margin-bottom: 6px; text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+    .small { font-size: 12px; color: #cbd5e1; text-shadow: 0 1px 1px rgba(0,0,0,0.28); }
+
+    .preview {
+      white-space: pre-wrap;
+      line-height: 1.7;
+    }
+
+    /* 产品信息：恢复为两列网格，左右对齐 */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+    .grid > .full-width { grid-column: 1 / -1; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .footer { display: flex; gap: 8px; align-items: center; }
+
+    .chips { display:flex; gap:8px; flex-wrap:wrap; }
+    .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius: 999px; font-size:12px; border:1px solid var(--glass-border); background: var(--glass-bg); color:#fff; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); box-shadow: 0 6px 16px rgba(2,8,23,0.35); }
+    .chip.red { background: rgba(241, 83, 110, 0.18); border-color: rgba(241, 83, 110, 0.35); color:#fca5a5; }
+    .chip.green { background: rgba(22, 163, 74, 0.18); border-color: rgba(134, 239, 172, 0.35); color:#86efac; }
+    .chip.muted { background: rgba(255,255,255,0.08); border-color: var(--glass-border); color:#cbd5e1; }
+    .chip .x { cursor:pointer; color:#e5e7eb; opacity:.8; }
+    .chip .add { cursor:pointer; color:#e5e7eb; opacity:.8; }
+
+    .radio-group { display:flex; gap:16px; align-items:center; }
+    .radio { display:flex; align-items:center; gap:6px; font-size: 13px; color: var(--text-strong); text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+    .radio input[disabled] { cursor:not-allowed; }
+
+    .progress {
+      height: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      overflow: hidden;
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    }
+    .progress > .bar {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #22c55e);
+      width: 0%;
+      transition: width 0.25s ease;
+    }
+    .progress-text { margin-top:6px; font-size:12px; color: var(--muted); }
+
+    .spinner {
+      display:inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #243142;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin-right: 6px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .script-block { margin-top: 10px; }
+    .script-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .script-title { font-weight:600; color:#a7f3d0; }
+    .script-body { position:relative; background: var(--glass-bg); border:1px solid var(--glass-border); border-radius: 14px; padding:10px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); box-shadow: var(--glass-shadow); overflow:hidden; }
+    .script-body::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0)); mix-blend-mode: screen; }
+    .script-actions { display:flex; gap:8px; }
+    .script-index { color:#a7f3d0; font-weight:600; }
+
+    .label-row { display:flex; align-items:center; justify-content:space-between; margin-bottom: 0; }
+    .label-row .label { margin-bottom: 0; }
+    .switch-wrap { display:inline-flex; align-items:center; gap:8px; }
+
+    .checkbox { display:inline-flex; align-items:center; gap:8px; cursor:pointer; }
+    .checkbox input { position:absolute; opacity:0; pointer-events:none; }
+    .checkbox .mark { width:16px; height:16px; border:1px solid var(--glass-border); border-radius:4px; background: var(--glass-bg); display:inline-block; position:relative; transition:.2s; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); box-shadow: 0 3px 8px rgba(2,8,23,0.35); }
+    .checkbox:hover .mark { border-color: rgba(59,130,246,0.55); }
+    .checkbox input:focus + .mark { box-shadow: 0 0 0 2px rgba(59,130,246,.25), 0 3px 8px rgba(2,8,23,0.35); }
+    .checkbox input:checked + .mark { background: linear-gradient(180deg, rgba(59,130,246,0.35), rgba(59,130,246,0.25)); border-color: rgba(59,130,246,0.55); }
+    .checkbox input:checked + .mark::after { content:""; position:absolute; left:4px; top:2px; width:4px; height:8px; border-right:2px solid #fff; border-bottom:2px solid #fff; transform: rotate(45deg); }
+    /* 置灰：当复选框禁用时，降低颜色和可交互提示 */
+    .checkbox input:disabled + .mark { opacity: .6; filter: grayscale(70%); border-color: rgba(255,255,255,0.08); background: rgba(17,25,40,0.55); cursor: not-allowed; }
+    .checkbox input:disabled ~ .small { color: #8b93a4; cursor: not-allowed; }
+    .error-text { color:#ef4444; font-size:12px; margin-top:6px; }
+    .token-input.disabled { opacity:.65; cursor:not-allowed; }
+    .token-input.disabled .x, .token-input.disabled .add { pointer-events:none; opacity:.4; }
+
+    /* 必填/选填徽标 Glass */
+    /* 已不使用徽标呈现必填/选填，改为生成时高亮 */
+
+    /* Fallback when backdrop-filter unsupported */
+    @supports not ((backdrop-filter: blur(1px))) {
+      .panel, .input, textarea, select, .chip, .script-body, .progress, .badge, .checkbox .mark { background: rgba(17,25,40,0.75); border-color: rgba(255,255,255,0.10); box-shadow: 0 10px 30px rgba(2,8,23,0.45); }
+      .btn { background: #3b82f6; border: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- 内嵌项目文档（分享版单文件封装） -->
+  <div class="panel section" id="embedded-docs" style="max-width:1080px; margin:16px auto;">
+    <div class="section-title" style="font-size:18px; display:flex; align-items:center; gap:8px"><span class="emoji">📄</span> 项目文档（内嵌） <span class="badge optional">分享版</span></div>
+    <div class="callout" style="margin:8px 0 12px; padding:10px 12px; border-radius:8px; background: rgba(59,130,246,0.12); color:#3b82f6; border:1px solid rgba(59,130,246,0.35); font-size:14px;">
+      下列参考文档由AI生成，非产品正式PRD，仅供参考
+    </div>
+    <details>
+      <summary class="label" style="font-size:16px; padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:8px"><span class="emoji">📘</span> README.md</summary>
+      <pre class="preview" style="white-space:pre-wrap; font-size:13px; line-height:1.6;">
+# 电商口播脚本生成器（纯前端Demo）
+
+> 基于商品信息自动生成多风格口播脚本的交互式工具
+
+## 🚀 快速开始
+
+### 方式一：直接打开（推荐）
+
+双击 `index.html` 文件，即可在浏览器中直接使用！
+
+### 方式二：开发环境
+
+```bash
+npm install
+npm run dev
+```
+
+## ✨ 功能特性
+
+- 📥 **智能解析**：支持商品链接/文本/名称自动提取
+- 🏷️ **标签管理**：卖点、人群、痛点、场景、促销五类标签
+- 🎨 **三种风格**：种草、痛点、权益价格
+- 🔤 **字数控制**：自动、50-100字、100-150字
+- 📊 **字段校验**：智能必填项检查与错误提示
+- 📋 **导出功能**：复制/导出脚本为 txt 文件
+
+## 🛠️ 技术栈
+
+- **HTML5 + CSS3 + 原生 JavaScript**（v0.3.0+）
+- ~~React 18 + Vite 5~~（v0.2.x 及之前版本）
+
+## 📦 版本历史
+
+- **v0.3.1** - 修复标签输入框点击聚焦交互
+- **v0.3.0** - 纯 HTML 文件改造，可直接双击打开
+- **v0.2.0** - 支持字段启用/禁用与校验机制
+- **v0.1.0** - 基础功能完成
+
+## 💡 使用说明
+
+1. **输入商品信息**：在输入框中输入商品名称、描述文本或链接
+2. **失焦自动解析**：离开输入框后自动提取并显示建议标签
+3. **编辑标签**：点击绿色"+"号添加建议标签，或手动输入
+4. **选择设置**：选择脚本风格、字数范围和生成个数
+5. **生成脚本**：点击"生成脚本"按钮，获得多个口播文案
+6. **复制导出**：复制到剪贴板或导出为 txt 文件
+      </pre>
+    </details>
+    <details>
+      <summary class="label" style="font-size:16px; padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:8px"><span class="emoji">🧩</span> PRD.md</summary>
+      <pre class="preview" style="white-space:pre-wrap; font-size:13px; line-height:1.6;">
+# 页面 UI / 交互 PRD（当前版本）
+
+本文档仅描述“当前页面”的产品 UI 元素与交互逻辑，面向产品与设计，不涉及技术实现、数据结构或团队流程。
+
+## 页面结构（低保真原型）
+- 顶部标题：`脚本生成与裂变工具`。
+- Panel：`输入商品信息`（单行输入 + 计数 + 加载状态）。
+- Panel：`产品信息`（两列网格，含名称/卖点/人群/痛点/促销/场景）。
+- Panel：`选择脚本风格`（风格选择、字数选择、生成个数、生成按钮、进度条）。
+- 结果区：脚本卡片列表（结构标签、正文、复制/导出）。
+
+## 模块与元素规范
+
+### 输入商品信息（必看）
+- 输入框：`#raw-input`，placeholder `请输入商品信息`。
+- 计数：右下方显示 `X / 200 字`，随输入实时更新；超过 200 添加红色错误边框。
+- 触发解析：仅“失焦”触发；与上次内容相同不重复触发。
+- 加载状态：展示旋转图标；解析完成后才显示建议标签（各模块下方）。
+
+### 产品信息（两列网格）
+- 布局：`grid-template-columns: 1fr 1fr; gap: 12px;`。
+- 左列：`产品名称`、`产品卖点（主/副/自定义）`、`适用人群`。
+- 右列：`用户痛点`、`促销折扣`、`适用场景`。
+
+#### 产品名称（必填）
+- 单行输入；实时计数 `X / 30 字`；超过 30 显示错误边框。
+- 必填徽标：`必填` 常驻；生成前校验非空。
+
+#### 卖点输入（chips + 建议）
+- 主卖点（必填）：标签输入组件（见下文组件规范），总字数上限 50。
+- 副卖点（选填）：有独立“启用”开关；关闭后不可编辑且不显示建议；字数上限 50。
+- 自定义卖点（选填）：有独立“启用”开关；关闭后不可编辑且不显示建议；字数上限 50。
+
+#### 适用人群（选填，最多 1 项）
+- 标签输入组件；最多保留 1 个 chip；字数上限 20。
+- 行为：再次添加会替换现有选择（包含点击建议和回车提交）。
+
+#### 用户痛点（模板联动必填）
+- 当脚本风格选择 `痛点（pain）` 时，必填（至少 1 项）。
+- 标签输入组件；字数上限 50；支持建议标签。
+
+#### 促销折扣（模板联动必填）
+- 当脚本风格选择 `权益价格（benefit_price）` 时，必填（至少 1 项）。
+- 标签输入组件；字数上限 50；支持建议标签。
+
+#### 适用场景（选填）
+- 标签输入组件；字数上限 50；支持建议标签。
+
+### 标签输入组件（统一规范）
+- 组成：
+  - 输入区域内部展示已添加 chips（绿色/可删除，带 `×`）。
+  - 输入框 placeholder：`输入后按回车添加`；当已有内容时自动隐藏。
+  - 建议区域：下方展示绿色建议 chips，点击可加入；加载中不展示建议。
+- 提交方式：
+  - `Enter` / `，` / `,` / `；` / `;` 分隔提交；`blur` 时自动解析当前输入。
+  - IME 兼容：中文输入法合成阶段按 `Enter` 不提交，避免截断（合成结束后正常提交）。
+- 去重与替换：
+  - 同类标签去重；重复点击建议不新增。
+  - 人群模块最多 1 项，新增将替换现有项。
+- 建议可见性：
+  - 已加入后建议 chips 仍保持可见，不做过滤或隐藏（点击后若重复则不变）。
+- 计数与限制：
+  - 在输入组件右下方或附近显示总字数计数，如 `已用 X / 50 字`（人群为 `20`）。
+  - 达到上限后阻止新增；维持建议可见；输入框显示错误态。
+- 删除：点击 chip 上的 `×` 即时移除并更新计数。
+
+### 风格与生成设置
+- 脚本风格（下拉）：`种草` / `痛点` / `权益价格`。
+- 字数（单选）：`自动` / `50-100字` / `100-150字`。
+- 生成个数（单选）：`3` / `5` / `8`。
+- 生成按钮：`生成脚本`。
+- 进度：按钮下方显示进度条与文案（`正在生成...`/`已完成`）。
+
+## 校验与提示（生成前）
+- 动态必填：
+  - 产品名称：必填。
+  - 主卖点：必填。
+  - 痛点：当风格为 `痛点` 必填。
+  - 促销：当风格为 `权益价格` 必填。
+- 失败反馈：
+  - 顶部右侧弹出非阻塞通知（约 2.2 秒自动消失）：`还有必填项未填写，请补充后再生成`。
+  - 对应输入框红色高亮；不展示下方长错误文案。
+
+## 生成与结果
+- 每条脚本卡片：
+  - 头部：`脚本N` + 操作区（`复制` / `导出`）。
+  - 标签：结构标签 chips（绿色）。
+  - 正文：脚本文本。
+- 操作：
+  - 复制：点击后弹出成功通知。
+  - 导出：文件名为 `产品名-序号.txt`。
+
+## 文案与细节统一
+- Panel 标题：`📥 输入商品信息`、`📦 产品信息`、`🎨 选择脚本风格`、`🔤 字数`、`🧩 生成个数`。
+- 字段徽标：`必填` / `选填`（痛点/促销随模板联动）。
+- 人群字段附文案：`最多 1 项`。
+- 输入引导：统一使用 `输入后按回车添加`。
+- 计数文案：`X / 200 字`（原始输入）、`X / 30 字`（产品名称）、`已用 X / 50 字`（标签组件，部分为 20）。
+
+## 交互流程示例（从零到生成）
+1) 在 `输入商品信息` 填写产品文本 → 失焦触发解析 → 显示加载 → 加载结束后各模块出现建议 chips。
+2) 在 `产品名称` 填写名称（≤30 字）。
+3) 在 `主卖点` 输入若干关键词，回车或逗号提交，或直接点击建议 chips 加入（占用总字数，不重复）。
+4) 可按需启用 `副卖点` / `自定义卖点`，方式同上；可在 `适用人群` 选择 1 项（新增替换旧值）。
+5) 若选择 `痛点` 风格，则在 `用户痛点` 至少加入 1 项；选择 `权益价格` 风格，则在 `促销折扣` 至少加入 1 项。
+6) 选择 `字数` 与 `生成个数` → 点击 `生成脚本` → 进度条运行 → 生成完成显示卡片，可复制/导出。
+
+## 验收要点
+- 解析只在失焦触发且内容变化时发生；加载中不展示建议。
+- 格式与计数实时更新；达到上限停止新增并显示错误态。
+- 中文 IME 合成阶段按 `Enter` 不提交；合成结束后正常提交。
+- 建议 chips 保持可见；已添加项不被隐藏或删除。
+- 动态必填规则正确阻止生成并给出统一提示。
+      </pre>
+    </details>
+  </div>
+
+  <script>
+    // 全局状态管理
+    const DEFAULT_INFO = {
+      productName: '',
+      price: '',
+      mainFeatures: [],    // 主卖点
+      secondaryFeatures: [], // 副卖点
+      customFeatures: [],    // 自定义卖点
+      people: [],
+      pains: [],
+      promotions: [],
+      scenes: [],
+      keywords: []
+    };
+
+    const state = {
+      rawText: '',
+      loading: false,
+      inputFocused: false,
+      lastSubmittedRaw: '',
+      info: { ...DEFAULT_INFO },
+      suggested: { features: [], people: [], pains: [], scenes: [], promotions: [], name: '' },
+      opts: {
+        charCount: 'auto',
+        template: 'seed',
+      },
+      variationCount: 3,
+      scripts: [],
+      progress: 0,
+      enabled: { features: true, people: false, pains: false, promotions: false, scenes: false, secondaryFeatures: false, customFeatures: false },
+      errors: {},
+      notification: { text: '', visible: false, type: 'error' }
+    };
+
+    // 工具函数
+    function normalizeUrl(u) {
+      try {
+        const url = new URL(u);
+        return url.toString();
+      } catch {
+        return '';
+      }
+    }
+
+    async function fetchReadable(url) {
+      const u = normalizeUrl(url);
+      if (!u) throw new Error('链接无效');
+      const prefix = u.startsWith('https://') ? 'https://r.jina.ai/https://' : 'https://r.jina.ai/http://';
+      const target = prefix + u.replace(/^https?:\/\//, '');
+      const res = await fetch(target);
+      if (!res.ok) throw new Error('无法抓取页面文本');
+      const text = await res.text();
+      return text;
+    }
+
+    function parseBasicInfoFromText(text) {
+      const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      const title = lines[0] || '未命名商品';
+      const priceMatch = text.match(/([¥￥]\s?\d+[\d,.]*)|价格[:：]?\s?(\d+[\d,.]*)/);
+      const price = priceMatch ? priceMatch[0].replace(/价格[:：]?\s?/, '') : '';
+
+      const featureKeywords = ['特点','功能','支持','优势','卖点','亮点','升级','配置','参数','适合','适用'];
+      const sentences = text.split(/[。.!?]\s*/).map(s => s.trim()).filter(Boolean);
+      const features = sentences.filter(s => featureKeywords.some(k => s.includes(k))).slice(0, 5);
+
+      const audience = sentences.find(s => /适合|适用|人群|家庭|学生|白领|宝妈/.test(s)) || '';
+      const pains = sentences.filter(s => /痛点|困扰|难题|麻烦|烦恼/.test(s)).slice(0, 3);
+
+      const scenes = sentences.filter(s => /场景|办公室|居家|户外|旅行|学习|工作/.test(s)).slice(0, 5);
+      const keywords = Array.from(new Set((text.match(/[#\u4e00-\u9fa5A-Za-z0-9]{2,}/g) || [])
+        .filter(k => /品质|设计|便携|轻薄|续航|性能|稳定|易用|高效|专业|旗舰|快充|静音/.test(k)))).slice(0, 8);
+
+      return {
+        productName: title.length > 80 ? title.slice(0, 80) : title,
+        price,
+        features,
+        audience,
+        pains,
+        scenes,
+        keywords,
+        raw: text.slice(0, 20000),
+      }
+    }
+
+    function inferPromotions(text = '') {
+      const candidates = [];
+      const rules = [
+        { re: /满减|满\d+减\d+|满\d+/i, tag: '满减优惠' },
+        { re: /买一送一|赠品|送礼/i, tag: '买一送一' },
+        { re: /免运费|包邮/i, tag: '包邮免运' },
+        { re: /限时|今日|活动|折扣/i, tag: '限时立减' }
+      ];
+      rules.forEach(r => { if (r.re.test(text)) candidates.push(r.tag) });
+      if (candidates.length === 0) candidates.push('限时立减', '包邮免运');
+      return Array.from(new Set(candidates)).slice(0, 2);
+    }
+
+    const HOOKS = [
+      (p, n) => `是否也为"${p}"烦恼？${n}来帮你。`,
+      (p, n) => `这个问题困扰很多人：${p}。用${n}轻松解决。`,
+      (p, n) => `告别${p}，从今天开始用${n}。`
+    ];
+
+    function oneScript(info, opts, variant = 0) {
+      const { productName, price, mainFeatures = [], secondaryFeatures = [], customFeatures = [], pains = [], scenes = [], people = [], promotions = [] } = info;
+      const { charCount, template } = opts;
+
+      // 依据启用状态决定是否包含副卖点与自定义卖点
+      const enabled = info.__enabled || { features: true, scenes: true, people: true, pains: true, promotions: true, secondaryFeatures: true, customFeatures: true };
+      const rawAllFeatures = Array.from(new Set([
+        ...(mainFeatures || []),
+        ...(enabled.secondaryFeatures ? (secondaryFeatures || []) : []),
+        ...(enabled.customFeatures ? (customFeatures || []) : [])
+      ]));
+      const allFeatures = rawAllFeatures;
+      const audienceText = (people || []).join('、');
+      const hook = pains[0] ? HOOKS[variant % HOOKS.length](pains[0], productName) : `想让生活更高效？试试${productName}`;
+      const ftrsText = (allFeatures || []).slice(0, 3).map((f, i) => `${i + 1}. ${f}`).join('\n');
+      const sceneLine = scenes[0] ? scenes[0] : (audienceText ? `尤其适合：${audienceText}` : '多场景适用，口碑稳定。');
+      const offer = price ? `当前到手价约${price}。` : '现在下单享更多优惠福利。';
+      const ctaList = ['立即了解', '马上行动', '现在就行动'];
+      const cta = ctaList[variant % ctaList.length];
+      const promosText = promotions?.length ? promotions.join('、') : '';
+      const firstFeature = (mainFeatures || [])[0] || allFeatures[0] || '';
+      const lines = [];
+      if (template === 'seed') {
+        lines.push(`种草开场：${productName}${firstFeature ? '，' + firstFeature : ''}`);
+        if (allFeatures.length) lines.push(`卖点速览：\n${ftrsText}`);
+        if ((enabled.scenes && scenes.length) || (enabled.people && audienceText)) lines.push(`场景体验：${sceneLine}`);
+        lines.push(`行动号召：${cta}`);
+      } else if (template === 'pain') {
+        if (enabled.pains && pains.length) lines.push(`直击痛点：${hook}`);
+        lines.push(`解决方案：${productName}为你搞定`);
+        if (allFeatures.length) lines.push(`核心亮点：\n${ftrsText}`);
+        lines.push(`马上${cta}！`);
+      } else if (template === 'benefit_price') {
+        if (enabled.promotions && promotions.length) lines.push(`权益福利：${promosText}`);
+        lines.push(`价格信息：${offer}`);
+        if (allFeatures.length) lines.push(`亮点速览：\n${ftrsText}`);
+        lines.push(`立即${cta}`);
+      } else {
+        lines.push(`种草开场：${productName}`);
+        lines.push(`行动号召：${cta}`);
+      }
+
+      let result = lines.join('\n\n');
+      const target = {
+        auto: [80, 110],
+        s50_100: [50, 100],
+        s100_150: [100, 150]
+      }[charCount] || [80, 110];
+      if (result.length > target[1]) result = result.slice(0, target[1]);
+      return result;
+    }
+
+    function generateScripts(info, opts, count = 2, enabled = {}) {
+      const scripts = [];
+      for (let i = 0; i < count; i++) {
+        scripts.push(oneScript({ ...info, __enabled: enabled }, opts, i));
+      }
+      return scripts;
+    }
+
+    function createTagInput(container, value, onChange, placeholder, suggestions, disabled, error, maxCount, maxCharTotal) {
+      container.innerHTML = '';
+
+      const wrapper = document.createElement('div');
+      const inputWrapper = document.createElement('div');
+      inputWrapper.className = `input token-input${disabled ? ' disabled' : ''}`;
+      const totalLen = (value || []).reduce((sum, s) => sum + (s ? s.length : 0), 0);
+      const reachedLimit = (typeof maxCharTotal === 'number') && totalLen >= maxCharTotal;
+      if (error || reachedLimit) {
+        inputWrapper.classList.add('error');
+      }
+
+      if (value && value.length > 0) {
+        value.forEach(tag => {
+          const chip = document.createElement('span');
+          chip.className = 'chip red';
+          chip.innerHTML = `${tag}<span class="x">×</span>`;
+          chip.querySelector('.x').onclick = () => {
+            if (!disabled) {
+              onChange(value.filter(x => x !== tag));
+              render();
+            }
+          };
+          inputWrapper.appendChild(chip);
+        });
+      }
+
+      const input = document.createElement('input');
+      input.className = 'token-input-field';
+      // 当已有内容时隐藏占位提示文案
+      input.placeholder = (value && value.length > 0) ? '' : (placeholder || '输入后按 Enter 添加');
+      input.disabled = disabled;
+
+      // 添加点击容器聚焦输入框的交互
+      inputWrapper.addEventListener('click', (e) => {
+        if (!disabled && e.target === inputWrapper) {
+          input.focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        // 兼容中文输入法，组合输入阶段按 Enter 不应触发提交
+        if (!disabled && (e.key === ',' || (e.key === 'Enter' && !e.isComposing))) {
+          e.preventDefault();
+          const t = input.value.trim();
+          if (t) {
+            const next = (maxCount === 1) ? [t] : Array.from(new Set([...(value || []), t]));
+            const nextLen = next.reduce((sum, s) => sum + (s ? s.length : 0), 0);
+            if (typeof maxCharTotal === 'number' && nextLen > maxCharTotal) {
+              render();
+            } else {
+              onChange(next);
+              input.value = '';
+              render();
+            }
+          }
+        }
+      });
+
+      input.addEventListener('blur', () => {
+        if (!disabled) {
+          const t = input.value.trim();
+          if (t) {
+            const next = (maxCount === 1) ? [t] : Array.from(new Set([...(value || []), t]));
+            const nextLen = next.reduce((sum, s) => sum + (s ? s.length : 0), 0);
+            if (typeof maxCharTotal === 'number' && nextLen > maxCharTotal) {
+              render();
+            } else {
+              onChange(next);
+              input.value = '';
+              render();
+            }
+          }
+        }
+      });
+
+      inputWrapper.appendChild(input);
+      wrapper.appendChild(inputWrapper);
+
+      if (!disabled && suggestions && suggestions.length > 0) {
+        const chipsDiv = document.createElement('div');
+        chipsDiv.className = 'chips';
+        chipsDiv.style.marginTop = '8px';
+
+        // 改为始终显示所有建议项（即使已添加）
+        suggestions.forEach(s => {
+          const chip = document.createElement('span');
+          chip.className = 'chip green';
+          chip.innerHTML = `${s}<span class="add">＋</span>`;
+          chip.querySelector('.add').onclick = () => {
+            if (!disabled) {
+              const next = (maxCount === 1) ? [s] : Array.from(new Set([...(value || []), s]));
+              const nextLen = next.reduce((sum, x) => sum + (x ? x.length : 0), 0);
+              if (typeof maxCharTotal === 'number' && nextLen > maxCharTotal) {
+                render();
+              } else {
+                onChange(next);
+                render();
+              }
+            }
+          };
+          chipsDiv.appendChild(chip);
+        });
+
+        wrapper.appendChild(chipsDiv);
+      }
+
+      if (typeof maxCharTotal === 'number') {
+        const counter = document.createElement('div');
+        counter.style.marginTop = '4px';
+        counter.style.textAlign = 'right';
+        counter.style.fontSize = '12px';
+        counter.style.color = '#666';
+        counter.textContent = `${totalLen} / ${maxCharTotal} 字`;
+        wrapper.appendChild(counter);
+      }
+
+      // 不再渲染错误文案，改为输入框高亮动效
+
+      container.appendChild(wrapper);
+    }
+
+    function validateBeforeGenerate() {
+      const nextErrors = {};
+      const mainLen = (state.info.mainFeatures || []).length;
+      if (mainLen === 0) {
+        nextErrors.mainFeatures = '主卖点为必填，请添加至少 1 项';
+      }
+      if (!state.info.productName || !state.info.productName.trim()) {
+        nextErrors.productName = '产品名称为必填';
+      }
+      if (!state.opts.template) {
+        nextErrors.template = '请选择脚本风格';
+      }
+      if (state.opts.template === 'benefit_price') {
+        if (!state.enabled.promotions || !(state.info.promotions && state.info.promotions.length)) {
+          nextErrors.promotions = '选择"权益价格"时，促销折扣为必填';
+        }
+      }
+      if (state.opts.template === 'pain') {
+        if (!state.enabled.pains || !(state.info.pains && state.info.pains.length)) {
+          nextErrors.pains = '选择"痛点"风格时，痛点为必填';
+        }
+      }
+      state.errors = nextErrors;
+      return Object.keys(nextErrors).length === 0;
+    }
+
+    function structureLabels() {
+      const labels = [];
+      const featuresCount = (state.info.mainFeatures || []).length
+        + (state.enabled.secondaryFeatures ? ((state.info.secondaryFeatures || []).length) : 0)
+        + (state.enabled.customFeatures ? ((state.info.customFeatures || []).length) : 0);
+      if (state.opts.template === 'pain') {
+        if (state.enabled.pains && (state.info.pains || []).length) labels.push('直击痛点');
+        labels.push('解决方案');
+        if (featuresCount) labels.push('核心亮点');
+        labels.push('CTA');
+      } else if (state.opts.template === 'benefit_price') {
+        if (state.enabled.promotions && (state.info.promotions || []).length) labels.push('权益福利');
+        labels.push('价格信息');
+        if (featuresCount) labels.push('亮点速览');
+        labels.push('CTA');
+      } else {
+        labels.push('种草开场');
+        if (featuresCount) labels.push('卖点速览');
+        if ((state.enabled.scenes && (state.info.scenes || []).length) || (state.enabled.people && (state.info.people || []).length)) labels.push('场景体验');
+        labels.push('CTA');
+      }
+      return labels;
+    }
+
+    async function handleExtract() {
+      const t = state.rawText.trim();
+      if (!t) return;
+      state.loading = true;
+      render();
+
+      state.suggested = { features: [], people: [], pains: [], scenes: [], promotions: [], name: '' };
+      const start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      let basic;
+      try {
+        const maybeUrl = normalizeUrl(t);
+        if (maybeUrl) {
+          const pageText = await fetchReadable(maybeUrl);
+          basic = parseBasicInfoFromText(pageText);
+        } else {
+          if (t && t.length < 50) {
+            basic = {
+              productName: t,
+              price: '',
+              features: ['紧密配套设计', '多设备无缝切换', '超长续航'],
+              audience: '办公人群、设计师、多设备用户',
+              pains: ['传统鼠标便携性差', '多设备切换繁琐', '续航时间短'],
+              scenes: ['移动办公', '多设备协同', '精准控制'],
+              raw: t
+            };
+          } else {
+            basic = parseBasicInfoFromText(t);
+          }
+        }
+      } catch (e) {
+        alert(e.message || '提取失败，请检查输入');
+      } finally {
+        const end = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        const elapsed = Math.max(0, end - start);
+        const MIN_LOADING_MS = 2300;
+        const wait = Math.max(0, MIN_LOADING_MS - elapsed);
+        if (wait > 0) await new Promise(res => setTimeout(res, wait));
+
+        if (basic) {
+          const promoTags = inferPromotions(basic.raw || t);
+          state.suggested = {
+            features: basic.features?.slice(0, 6) || [],
+            people: basic.audience ? basic.audience.split(/、|，|,|；|;|\s+/).filter(Boolean).slice(0, 6) : [],
+            pains: basic.pains?.slice(0, 6) || [],
+            scenes: basic.scenes?.slice(0, 6) || [],
+            promotions: promoTags || [],
+            name: basic.productName || ''
+          };
+          state.info = {
+            ...state.info,
+            productName: basic.productName || state.info.productName,
+            price: basic.price || state.info.price
+          };
+          state.lastSubmittedRaw = t;
+        }
+        state.loading = false;
+        render();
+      }
+    }
+
+    function handleRawBlur() {
+      const t = state.rawText.trim();
+      if (!state.inputFocused) return;
+      state.inputFocused = false;
+      if (state.loading) return;
+      if (!t) return;
+      if (t === (state.lastSubmittedRaw || '').trim()) return;
+      handleExtract();
+    }
+
+    function copyScript(text) {
+      if (!text) return;
+      navigator.clipboard.writeText(text)
+        .then(() => alert('脚本已复制到剪贴板'))
+        .catch(() => alert('复制失败'));
+    }
+
+    function exportScript(text, name = '脚本') {
+      if (!text) return;
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${name}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function showNotification(text, type = 'error', duration = 2200) {
+      state.notification.text = text;
+      state.notification.type = type;
+      state.notification.visible = true;
+      render();
+      clearTimeout(state._notifyTimer);
+      state._notifyTimer = setTimeout(() => {
+        state.notification.visible = false;
+        render();
+      }, duration);
+    }
+
+    function startGenerate() {
+      if (!state.info) return alert('请先输入并提取产品信息');
+      if (!validateBeforeGenerate()) {
+        // 在生成时校验失败：通知 + 红色高亮与动效反馈
+        render();
+        showNotification('还有必填项未填写，请补充后再生成', 'error');
+        return;
+      }
+      state.progress = 0;
+      state.scripts = [];
+      render();
+
+      let p = 0;
+      const timer = setInterval(() => {
+        p = Math.min(100, p + 12);
+        state.progress = p;
+        render();
+        if (p >= 100) {
+          clearInterval(timer);
+          const res = generateScripts(state.info, state.opts, state.variationCount, state.enabled);
+          state.scripts = res;
+          render();
+        }
+      }, 160);
+    }
+
+    // 切换“全选（选填）”——批量启用/禁用可选字段
+    function toggleAllOptional(checked) {
+      const requiredPains = state.opts.template === 'pain';
+      const requiredPromotions = state.opts.template === 'benefit_price';
+      const keys = ['secondaryFeatures','customFeatures','people','scenes'];
+      if (!requiredPains) keys.push('pains');
+      if (!requiredPromotions) keys.push('promotions');
+      for (let i = 0; i < keys.length; i++) {
+        state.enabled[keys[i]] = checked;
+      }
+      render();
+    }
+
+    function render() {
+      // 模板联动必选字段（痛点/促销）
+      const requiredPains = state.opts.template === 'pain';
+      const requiredPromotions = state.opts.template === 'benefit_price';
+      if (requiredPains) state.enabled.pains = true;
+      if (requiredPromotions) state.enabled.promotions = true;
+      // 计算“全选（选填）”的三态
+      const toggleableKeys = ['secondaryFeatures','customFeatures','people','scenes']
+        .concat(requiredPains ? [] : ['pains'])
+        .concat(requiredPromotions ? [] : ['promotions']);
+      const selectedCount = toggleableKeys.filter(k => state.enabled[k]).length;
+      const allSelected = selectedCount === toggleableKeys.length && toggleableKeys.length > 0;
+      const noneSelected = selectedCount === 0;
+      const selectAllKeysStr = JSON.stringify(toggleableKeys);
+      // 组装产品信息块为左右对齐的两列网格（左：名称/卖点/人群；右：痛点/促销/场景）
+      const nameLen = (state.info.productName || '').length;
+      const blockName = `
+        <div class="full-width">
+          <div class="label">产品名称 <span class="badge required">必填</span></div>
+          <input class="input ${(state.errors.productName || nameLen > 30) ? 'error' : ''}" value="${state.info.productName}" placeholder="例如：便携商务鼠标" oninput="state.info.productName=this.value; (function(el){ var len=el.value.length; var c=document.getElementById('name-counter'); if(c){ c.textContent=len + ' / 30 字'; } if(len>30){ el.classList.add('error'); } else { el.classList.remove('error'); } })(this)" />
+          <div id="name-counter" style="text-align:right; font-size:12px; color:#666; margin-top:4px">${nameLen} / 30 字</div>
+        </div>
+      `;
+
+      const blockFeatures = `
+        <div>
+          <div class="label">产品卖点</div>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <div>
+              <div class="label">主卖点 <span class="badge required">必填</span></div>
+              <div id="main-features-input"></div>
+            </div>
+            ${state.enabled.secondaryFeatures ? `
+            <div>
+              <div class="label">副卖点 <span class="badge optional">选填</span></div>
+              <div id="secondary-features-input"></div>
+            </div>` : ''}
+            ${state.enabled.customFeatures ? `
+            <div>
+              <div class="label">自定义卖点 <span class="badge optional">选填</span></div>
+              <div id="custom-features-input"></div>
+            </div>` : ''}
+          </div>
+        </div>
+      `;
+
+      const blockPeople = `
+        <div>
+            <div class="label-row">
+              <div class="label">适用人群（最多 1 项） <span class="badge optional">选填</span></div>
+              <div class="switch-wrap">
+                <label class="checkbox">
+                  <input type="checkbox" ${state.enabled.people ? 'checked' : ''} onchange="state.enabled.people=this.checked; render()" />
+                  <span class="mark"></span>
+                  <span class="small">启用</span>
+                </label>
+              </div>
+            </div>
+          <div id="people-input"></div>
+        </div>
+      `;
+
+      const blockPains = `
+        <div>
+            <div class="label-row">
+              <div class="label">用户痛点 <span class="badge ${state.opts.template === 'pain' ? 'required' : 'optional'}">${state.opts.template === 'pain' ? '必填' : '选填'}</span></div>
+              <div class="switch-wrap">
+                <label class="checkbox">
+                  <input type="checkbox" ${state.enabled.pains ? 'checked' : ''} onchange="state.enabled.pains=this.checked; render()" />
+                  <span class="mark"></span>
+                  <span class="small">启用</span>
+                </label>
+              </div>
+            </div>
+          <div id="pains-input"></div>
+        </div>
+      `;
+
+      const blockPromotions = `
+        <div>
+            <div class="label-row">
+              <div class="label">促销折扣 <span class="badge ${state.opts.template === 'benefit_price' ? 'required' : 'optional'}">${state.opts.template === 'benefit_price' ? '必填' : '选填'}</span></div>
+              <div class="switch-wrap">
+                <label class="checkbox">
+                  <input type="checkbox" ${state.enabled.promotions ? 'checked' : ''} onchange="state.enabled.promotions=this.checked; render()" />
+                  <span class="mark"></span>
+                  <span class="small">启用</span>
+                </label>
+              </div>
+            </div>
+          <div id="promotions-input"></div>
+        </div>
+      `;
+
+      const blockScenes = `
+        <div>
+            <div class="label-row">
+              <div class="label">适用场景 <span class="badge optional">选填</span></div>
+              <div class="switch-wrap">
+                <label class="checkbox">
+                  <input type="checkbox" ${state.enabled.scenes ? 'checked' : ''} onchange="state.enabled.scenes=this.checked; render()" />
+                  <span class="mark"></span>
+                  <span class="small">启用</span>
+                </label>
+              </div>
+            </div>
+          <div id="scenes-input"></div>
+        </div>
+      `;
+
+      const styleChoiceBlock = `
+        <div class="panel section">
+          <div class="section-title"><span class="emoji">🎨</span> 选择脚本风格</div>
+          <div class="label">脚本风格</div>
+          <select class="${state.errors.template ? 'error' : ''}" onchange="state.opts.template=this.value; render()" style="margin-bottom:10px">
+            <option value="seed" ${state.opts.template === 'seed' ? 'selected' : ''}>种草</option>
+            <option value="pain" ${state.opts.template === 'pain' ? 'selected' : ''}>痛点</option>
+            <option value="benefit_price" ${state.opts.template === 'benefit_price' ? 'selected' : ''}>权益价格</option>
+          </select>
+        </div>
+      `;
+
+      const generatePanel = `
+        <div class="panel section">
+          <div class="section-title" style="margin-top: 6px"><span class="emoji">🔤</span> 字数</div>
+          <div class="radio-group" style="margin-bottom: 8px; display:flex; flex-direction:column; align-items:flex-start; gap:6px">
+            <label class="radio">
+              <input type="radio" ${state.opts.charCount === 'auto' ? 'checked' : ''} onchange="state.opts.charCount='auto'; render()" />
+              自动
+            </label>
+            <label class="radio">
+              <input type="radio" ${state.opts.charCount === 's50_100' ? 'checked' : ''} onchange="state.opts.charCount='s50_100'; render()" />
+              50-100字（≈10-15s 正常口播时长）
+            </label>
+            <label class="radio">
+              <input type="radio" ${state.opts.charCount === 's100_150' ? 'checked' : ''} onchange="state.opts.charCount='s100_150'; render()" />
+              100-150字（≈15-30s 正常口播时长）
+            </label>
+          </div>
+
+          <div class="section-title" style="margin-top: 6px"><span class="emoji">🧩</span> 生成个数</div>
+          <div class="radio-group" style="margin-bottom: 10px; display:flex; flex-direction:column; align-items:flex-start; gap:6px">
+            ${[3,5,8].map(n => `
+              <label class="radio">
+                <input type="radio" ${state.variationCount === n ? 'checked' : ''} onchange="state.variationCount=${n}; render()" />
+                ${n}
+              </label>
+            `).join('')}
+          </div>
+
+          <div class="footer">
+            <button class="btn" onclick="startGenerate()">生成脚本</button>
+          </div>
+        </div>
+      `;
+
+      const progressBlock = `
+        <div style="margin-top: 10px">
+          <div class="progress">
+            <div class="bar" style="width: ${state.progress}%"></div>
+          </div>
+          <div class="progress-text">正在生成...</div>
+        </div>
+      `;
+
+      const selectionPanel = `
+        <div class="panel section">
+          <div class="section-title"><span class="emoji">✅</span> 选择需要填写的字段</div>
+          <div style="display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; align-items:center;">
+            <div style="grid-column: 1 / -1;">
+              <label class="checkbox">
+                <input id="select-all-fields" type="checkbox" ${allSelected ? 'checked' : ''} onchange="toggleAllOptional(this.checked)" />
+                <span class="mark"></span>
+                <span class="small">全选</span>
+              </label>
+            </div>
+            <label class="checkbox"><input type="checkbox" checked disabled /><span class="mark"></span><span class="small">产品名称（必选）</span></label>
+            <label class="checkbox"><input type="checkbox" checked disabled /><span class="mark"></span><span class="small">主卖点（必选）</span></label>
+            <label class="checkbox"><input type="checkbox" ${state.enabled.secondaryFeatures ? 'checked' : ''} onchange="state.enabled.secondaryFeatures=this.checked; render()" /><span class="mark"></span><span class="small">副卖点（选填）</span></label>
+            <label class="checkbox"><input type="checkbox" ${state.enabled.customFeatures ? 'checked' : ''} onchange="state.enabled.customFeatures=this.checked; render()" /><span class="mark"></span><span class="small">自定义卖点（选填）</span></label>
+            <label class="checkbox"><input type="checkbox" ${state.enabled.people ? 'checked' : ''} onchange="state.enabled.people=this.checked; render()" /><span class="mark"></span><span class="small">适用人群（选填）</span></label>
+            <label class="checkbox"><input type="checkbox" ${state.enabled.scenes ? 'checked' : ''} onchange="state.enabled.scenes=this.checked; render()" /><span class="mark"></span><span class="small">适用场景（选填）</span></label>
+            <label class="checkbox"><input type="checkbox" ${state.enabled.pains ? 'checked' : ''} ${requiredPains ? 'disabled' : ''} onchange="state.enabled.pains=this.checked; render()" /><span class="mark"></span><span class="small">用户痛点（${requiredPains ? '必选' : '选填'}）</span></label>
+            <label class="checkbox"><input type="checkbox" ${state.enabled.promotions ? 'checked' : ''} ${requiredPromotions ? 'disabled' : ''} onchange="state.enabled.promotions=this.checked; render()" /><span class="mark"></span><span class="small">促销折扣（${requiredPromotions ? '必选' : '选填'}）</span></label>
+          </div>
+          <div class="small" style="margin-top:6px; color:#666;">必填字段已默认选中且不可取消；勾选的选填字段会在下方显示。</div>
+        </div>
+      `;
+
+      const gridBlocks = [blockName, blockFeatures];
+      if (requiredPains || state.enabled.pains) gridBlocks.push(blockPains);
+      if (requiredPromotions || state.enabled.promotions) gridBlocks.push(blockPromotions);
+      if (state.enabled.people) gridBlocks.push(blockPeople);
+      if (state.enabled.scenes) gridBlocks.push(blockScenes);
+      const productGridHTML = `<div class="grid">${gridBlocks.join('')}</div>`;
+
+      const generating = state.progress > 0 && state.progress < 100;
+      const root = document.getElementById('root');
+      root.innerHTML = `
+        <div class="app">
+          <div class="header">
+            <div class="title">脚本生成与裂变工具</div>
+          </div>
+
+          ${state.notification.visible ? `
+            <div class="toast ${state.notification.type} show">
+              <span class="icon">!</span>
+              <span class="msg">${state.notification.text}</span>
+            </div>
+          ` : ''}
+
+          <div class="panel section">
+            <div class="section-title"><span class="emoji">📥</span> 输入商品信息</div>
+            <input
+              id="raw-input"
+              class="input ${(state.rawText || '').length > 200 ? 'error' : ''}"
+              placeholder="请输入商品信息"
+              value="${state.rawText}"
+              onfocus="state.inputFocused=true"
+              onblur="handleRawBlur()"
+              oninput="state.rawText=this.value; (function(el){ var len=el.value.length; var c=document.getElementById('raw-counter'); if(c){ c.textContent = len + ' / 200 字'; } if(len>200){ el.classList.add('error'); } else { el.classList.remove('error'); } })(this)"
+            />
+            <div id="raw-counter" style="text-align:right; font-size:12px; color:#666; margin-top:4px">${(state.rawText || '').length} / 200 字</div>
+            ${state.loading ? '<div style="margin-top: 8px"><span class="spinner" /></div>' : ''}
+          </div>
+
+          ${styleChoiceBlock}
+          ${selectionPanel}
+          <div class="panel section">
+            <div class="section-title"><span class="emoji">📦</span> 产品信息</div>
+            ${productGridHTML}
+          </div>
+          ${generatePanel}
+          ${generating ? progressBlock : ''}
+
+          ${state.scripts.map((s, i) => `
+            <div class="panel script-block">
+              <div class="script-head">
+                <div class="script-title"><span class="script-index">脚本${i + 1}：</span></div>
+                <div class="script-actions">
+                  <button class="btn small secondary" onclick="copyScript(\`${s.replace(/`/g, '\\`')}\`)">复制</button>
+                  <button class="btn small ghost" onclick="exportScript(\`${s.replace(/`/g, '\\`')}\`, \`${state.info?.productName || '脚本'}-${i+1}\`)">导出</button>
+                </div>
+              </div>
+              <div class="chips" style="margin-bottom: 8px">
+                ${structureLabels().map(l => `<span class="chip green">${l}</span>`).join('')}
+              </div>
+              <div class="script-body preview">${s}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      // 设置“全选（选填）”的横线状态（indeterminate）
+      const selectAllEl = document.getElementById('select-all-fields');
+      if (selectAllEl) {
+        selectAllEl.indeterminate = !noneSelected && !allSelected;
+      }
+
+      // 渲染标签输入框
+      const elMain = document.getElementById('main-features-input');
+      if (elMain) createTagInput(
+        elMain,
+        state.info.mainFeatures || [],
+        (v) => { state.info.mainFeatures = v; },
+        '输入后按回车添加',
+        state.loading ? [] : (state.suggested.features || []),
+        false,
+        state.errors.mainFeatures,
+        null,
+        50
+      );
+
+      const elSecondary = document.getElementById('secondary-features-input');
+      if (elSecondary) createTagInput(
+        elSecondary,
+        state.info.secondaryFeatures || [],
+        (v) => { state.info.secondaryFeatures = v; },
+        '输入后按回车添加',
+        [],
+        (!state.enabled.secondaryFeatures),
+        '',
+        null,
+        50
+      );
+
+      const elCustom = document.getElementById('custom-features-input');
+      if (elCustom) createTagInput(
+        elCustom,
+        state.info.customFeatures || [],
+        (v) => { state.info.customFeatures = v; },
+        '输入后按回车添加',
+        [],
+        (!state.enabled.customFeatures),
+        '',
+        null,
+        50
+      );
+
+      const elPeople = document.getElementById('people-input');
+      if (elPeople) createTagInput(
+        elPeople,
+        state.info.people || [],
+        (v) => { state.info.people = v; },
+        '输入后按回车添加',
+        state.loading || !state.enabled.people ? [] : (state.suggested.people || []),
+        !state.enabled.people,
+        '',
+        1,
+        20
+      );
+
+      const elPains = document.getElementById('pains-input');
+      if (elPains) createTagInput(
+        elPains,
+        state.info.pains || [],
+        (v) => { state.info.pains = v; },
+        '输入后按回车添加',
+        state.loading || !state.enabled.pains ? [] : (state.suggested.pains || []),
+        !state.enabled.pains,
+        state.errors.pains,
+        null,
+        50
+      );
+
+      const elPromotions = document.getElementById('promotions-input');
+      if (elPromotions) createTagInput(
+        elPromotions,
+        state.info.promotions || [],
+        (v) => { state.info.promotions = v; },
+        '输入后按回车添加',
+        state.loading || !state.enabled.promotions ? [] : (state.suggested.promotions || []),
+        !state.enabled.promotions,
+        state.errors.promotions,
+        null,
+        50
+      );
+
+      const elScenes = document.getElementById('scenes-input');
+      if (elScenes) createTagInput(
+        elScenes,
+        state.info.scenes || [],
+        (v) => { state.info.scenes = v; },
+        '输入后按回车添加',
+        state.loading || !state.enabled.scenes ? [] : (state.suggested.scenes || []),
+        !state.enabled.scenes,
+        '',
+        null,
+        50
+      );
+    }
+
+    // 初始化
+    render();
+  </script>
+</body>
+</html>
