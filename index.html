@@ -407,6 +407,10 @@ npm run dev
 - 🔤 **字数控制**：自动、50-100字、100-150字
 - 📊 **字段校验**：智能必填项检查与错误提示
 - 📋 **导出功能**：复制/导出脚本为 txt 文件
+- 🖼️ **背景自定义与遮罩**：支持设置壁纸与半透明暗色遮罩，提高内容对比度（默认 `center / cover no-repeat fixed`）。
+- 🧪 **安全渲染**：脚本正文与输入值安全转义；标签 chips 采用 DOM 节点渲染，避免 `innerHTML` 注入。
+- ♿ **可读性优化**：统一灰色对比度（`--muted: #cbd5e1`）、增强占位符可读性（`opacity: 0.95`）、提升禁用小字对比度。
+- 🧩 **面板顺序优化**：先“选择需要填写的字段”，后“输入商品信息”；产品信息以两列网格展示。
 
 ## 🛠️ 技术栈
 
@@ -415,10 +419,12 @@ npm run dev
 
 ## 📦 版本历史
 
-- **v0.3.1** - 修复标签输入框点击聚焦交互
-- **v0.3.0** - 纯 HTML 文件改造，可直接双击打开
-- **v0.2.0** - 支持字段启用/禁用与校验机制
-- **v0.1.0** - 基础功能完成
+- **v0.4.4 (2025-10-30)** — 背景壁纸与遮罩、灰度统一、脚本/输入安全渲染、面板顺序优化、标签 chips 渲染优化。
+- **v0.4.3 (2025-10-29)** — PRD 校准与交互细节整理。
+- **v0.3.1** — 修复标签输入框点击聚焦交互
+- **v0.3.0** — 纯 HTML 文件改造，可直接双击打开
+- **v0.2.0** — 支持字段启用/禁用与校验机制
+- **v0.1.0** — 基础功能完成
 
 ## 💡 使用说明
 
@@ -428,6 +434,13 @@ npm run dev
 4. **选择设置**：选择脚本风格、字数范围和生成个数
 5. **生成脚本**：点击"生成脚本"按钮，获得多个口播文案
 6. **复制导出**：复制到剪贴板或导出为 txt 文件
+
+## 🔧 配置说明
+
+- 修改背景壁纸：在 `index.html` 的 `body` 背景中替换 URL，例如：
+  `background: linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)), url('<你的壁纸URL>') center / cover no-repeat fixed;`
+- 调整遮罩强度：将 `rgba(0,0,0,0.28)` 的透明度改为 `0.20 / 0.28 / 0.36` 等。
+- 按需区分移动端/桌面端遮罩：可添加媒体查询对不同设备设置不同透明度。
       </pre>
     </details>
     <details>
@@ -437,11 +450,12 @@ npm run dev
 
 本文档仅描述“当前页面”的产品 UI 元素与交互逻辑，面向产品与设计，不涉及技术实现、数据结构或团队流程。
 
-## 页面结构（低保真原型）
+## 页面结构（最新）
 - 顶部标题：`脚本生成与裂变工具`。
-- Panel：`输入商品信息`（单行输入 + 计数 + 加载状态）。
-- Panel：`产品信息`（两列网格，含名称/卖点/人群/痛点/促销/场景）。
 - Panel：`选择脚本风格`（风格选择、字数选择、生成个数、生成按钮、进度条）。
+- Panel：`选择需要填写的字段`（启用/禁用：名称/卖点/人群/痛点/促销/场景）。
+- Panel：`输入商品信息`（单行输入 + 计数 + 加载状态）。
+- Panel：`产品信息`（两列网格，含名称/卖点（主/副）/人群/痛点/促销/场景）。
 - 结果区：脚本卡片列表（结构标签、正文、复制/导出）。
 
 ## 模块与元素规范
@@ -454,7 +468,7 @@ npm run dev
 
 ### 产品信息（两列网格）
 - 布局：`grid-template-columns: 1fr 1fr; gap: 12px;`。
-    - 左列：`产品名称`、`产品卖点（主/副）`、`适用人群`。
+  - 左列：`产品名称`、`产品卖点（主/副）`、`适用人群`。
 - 右列：`用户痛点`、`促销折扣`、`适用场景`。
 
 #### 产品名称（必填）
@@ -462,9 +476,8 @@ npm run dev
 - 必填徽标：`必填` 常驻；生成前校验非空。
 
 #### 卖点输入（chips + 建议）
-- 主卖点（必填）：标签输入组件（见下文组件规范），总字数上限 50。
+- 主卖点（必填）：标签输入组件，总字数上限 50。
 - 副卖点（选填）：有独立“启用”开关；关闭后不可编辑且不显示建议；字数上限 50。
-    - （已移除）自定义卖点。
 
 #### 适用人群（选填，最多 1 项）
 - 标签输入组件；最多保留 1 个 chip；字数上限 20。
@@ -478,27 +491,6 @@ npm run dev
 - 当脚本风格选择 `权益价格（benefit_price）` 时，必填（至少 1 项）。
 - 标签输入组件；字数上限 50；支持建议标签。
 
-#### 适用场景（选填）
-- 标签输入组件；字数上限 50；支持建议标签。
-
-### 标签输入组件（统一规范）
-- 组成：
-  - 输入区域内部展示已添加 chips（绿色/可删除，带 `×`）。
-  - 输入框 placeholder：`输入后按回车添加`；当已有内容时自动隐藏。
-  - 建议区域：下方展示绿色建议 chips，点击可加入；加载中不展示建议。
-- 提交方式：
-  - `Enter` / `，` / `,` / `；` / `;` 分隔提交；`blur` 时自动解析当前输入。
-  - IME 兼容：中文输入法合成阶段按 `Enter` 不提交，避免截断（合成结束后正常提交）。
-- 去重与替换：
-  - 同类标签去重；重复点击建议不新增。
-  - 人群模块最多 1 项，新增将替换现有项。
-- 建议可见性：
-  - 已加入后建议 chips 仍保持可见，不做过滤或隐藏（点击后若重复则不变）。
-- 计数与限制：
-  - 在输入组件右下方或附近显示总字数计数，如 `已用 X / 50 字`（人群为 `20`）。
-  - 达到上限后阻止新增；维持建议可见；输入框显示错误态。
-- 删除：点击 chip 上的 `×` 即时移除并更新计数。
-
 ### 风格与生成设置
 - 脚本风格（下拉）：`种草` / `痛点` / `权益价格`。
 - 字数（单选）：`自动` / `50-100字` / `100-150字`。
@@ -506,24 +498,16 @@ npm run dev
 - 生成按钮：`生成脚本`。
 - 进度：按钮下方显示进度条与文案（`正在生成...`/`已完成`）。
 
-## 校验与提示（生成前）
-- 动态必填：
-  - 产品名称：必填。
-  - 主卖点：必填。
-  - 痛点：当风格为 `痛点` 必填。
-  - 促销：当风格为 `权益价格` 必填。
-- 失败反馈：
-  - 顶部右侧弹出非阻塞通知（约 2.2 秒自动消失）：`还有必填项未填写，请补充后再生成`。
-  - 对应输入框红色高亮；不展示下方长错误文案。
+### 视觉规范与背景样式（新增）
+- 页面背景：`linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)) + 壁纸 URL`，属性为 `center / cover no-repeat fixed`。
+- 灰色文字统一：`--muted: #cbd5e1`；占位符颜色为 `var(--muted)`，`opacity: 0.95`。
+- 禁用小字对比度提升：采用更浅灰（如 `#a8b1c3`），确保可读性。
+- 下拉箭头/图标对比度：与 `--muted` 保持一致，避免过低对比。
 
-## 生成与结果
-- 每条脚本卡片：
-  - 头部：`脚本N` + 操作区（`复制` / `导出`）。
-  - 标签：结构标签 chips（绿色）。
-  - 正文：脚本文本。
-- 操作：
-  - 复制：点击后弹出成功通知。
-  - 导出：文件名为 `产品名-序号.txt`。
+### 安全渲染与防注入（新增）
+- 脚本预览正文采用安全转义（保留换行，`white-space: pre-wrap`），不解析用户输入为 HTML。
+- 输入值（如产品名称、原始文本）的属性值统一转义，避免属性注入。
+- 标签 chips 使用 DOM 节点拼装，不使用 `innerHTML`，避免潜在注入与性能问题。
 
 ## 文案与细节统一
 - Panel 标题：`📥 输入商品信息`、`📦 产品信息`、`🎨 选择脚本风格`、`🔤 字数`、`🧩 生成个数`。
@@ -546,6 +530,7 @@ npm run dev
 - 中文 IME 合成阶段按 `Enter` 不提交；合成结束后正常提交。
 - 建议 chips 保持可见；已添加项不被隐藏或删除。
 - 动态必填规则正确阻止生成并给出统一提示。
+- 脚本预览保留换行与空格；不渲染或执行用户输入的 HTML/脚本；复制与导出与预览一致。
       </pre>
     </details>
   </div>
@@ -591,6 +576,26 @@ npm run dev
       } catch {
         return '';
       }
+    }
+
+    // 安全转义：防止 HTML 注入，同时保持显示效果
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    // 用于属性值（例如 input 的 value）转义
+    function escapeAttr(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
     }
 
     async function fetchReadable(url) {
@@ -727,13 +732,17 @@ npm run dev
         value.forEach(tag => {
           const chip = document.createElement('span');
           chip.className = 'chip red';
-          chip.innerHTML = `${tag}<span class="x">×</span>`;
-          chip.querySelector('.x').onclick = () => {
+          chip.textContent = tag;
+          const x = document.createElement('span');
+          x.className = 'x';
+          x.textContent = '×';
+          x.onclick = () => {
             if (!disabled) {
               onChange(value.filter(x => x !== tag));
               render();
             }
           };
+          chip.appendChild(x);
           inputWrapper.appendChild(chip);
         });
       }
@@ -799,8 +808,11 @@ npm run dev
         suggestions.forEach(s => {
           const chip = document.createElement('span');
           chip.className = 'chip green';
-          chip.innerHTML = `${s}<span class="add">＋</span>`;
-          chip.querySelector('.add').onclick = () => {
+          chip.textContent = s;
+          const add = document.createElement('span');
+          add.className = 'add';
+          add.textContent = '＋';
+          add.onclick = () => {
             if (!disabled) {
               const next = (maxCount === 1) ? [s] : Array.from(new Set([...(value || []), s]));
               const nextLen = next.reduce((sum, x) => sum + (x ? x.length : 0), 0);
@@ -812,6 +824,7 @@ npm run dev
               }
             }
           };
+          chip.appendChild(add);
           chipsDiv.appendChild(chip);
         });
 
@@ -1036,13 +1049,12 @@ npm run dev
       const selectedCount = toggleableKeys.filter(k => state.enabled[k]).length;
       const allSelected = selectedCount === toggleableKeys.length && toggleableKeys.length > 0;
       const noneSelected = selectedCount === 0;
-      const selectAllKeysStr = JSON.stringify(toggleableKeys);
       // 组装产品信息块为左右对齐的两列网格（左：名称/卖点/人群；右：痛点/促销/场景）
       const nameLen = (state.info.productName || '').length;
       const blockName = `
         <div class="full-width">
           <div class="label">产品名称 <span class="badge required">必填</span></div>
-          <input class="input ${(state.errors.productName || nameLen > 30) ? 'error' : ''}" value="${state.info.productName}" placeholder="例如：便携商务鼠标" oninput="state.info.productName=this.value; (function(el){ var len=el.value.length; var c=document.getElementById('name-counter'); if(c){ c.textContent=len + ' / 30 字'; } if(len>30){ el.classList.add('error'); } else { el.classList.remove('error'); } })(this)" />
+          <input class="input ${(state.errors.productName || nameLen > 30) ? 'error' : ''}" value="${escapeAttr(state.info.productName)}" placeholder="例如：便携商务鼠标" oninput="state.info.productName=this.value; (function(el){ var len=el.value.length; var c=document.getElementById('name-counter'); if(c){ c.textContent=len + ' / 30 字'; } if(len>30){ el.classList.add('error'); } else { el.classList.remove('error'); } })(this)" />
           <div id="name-counter" style="text-align:right; font-size:12px; color:#666; margin-top:4px">${nameLen} / 30 字</div>
         </div>
       `;
@@ -1227,6 +1239,8 @@ npm run dev
               <span class="msg">${state.notification.text}</span>
             </div>
           ` : ''}
+          ${styleChoiceBlock}
+          ${selectionPanel}
 
           <div class="panel section">
             <div class="section-title"><span class="emoji">📥</span> 输入商品信息</div>
@@ -1234,7 +1248,7 @@ npm run dev
               id="raw-input"
               class="input ${(state.rawText || '').length > 200 ? 'error' : ''}"
               placeholder="请输入商品信息"
-              value="${state.rawText}"
+              value="${escapeAttr(state.rawText)}"
               onfocus="state.inputFocused=true"
               onblur="handleRawBlur()"
               oninput="state.rawText=this.value; (function(el){ var len=el.value.length; var c=document.getElementById('raw-counter'); if(c){ c.textContent = len + ' / 200 字'; } if(len>200){ el.classList.add('error'); } else { el.classList.remove('error'); } })(this)"
@@ -1242,9 +1256,6 @@ npm run dev
             <div id="raw-counter" style="text-align:right; font-size:12px; color:#666; margin-top:4px">${(state.rawText || '').length} / 200 字</div>
             ${state.loading ? '<div style="margin-top: 8px"><span class="spinner" /></div>' : ''}
           </div>
-
-          ${styleChoiceBlock}
-          ${selectionPanel}
           <div class="panel section">
             <div class="section-title"><span class="emoji">📦</span> 产品信息</div>
             ${productGridHTML}
@@ -1264,7 +1275,7 @@ npm run dev
               <div class="chips" style="margin-bottom: 8px">
                 ${structureLabels().map(l => `<span class="chip green">${l}</span>`).join('')}
               </div>
-              <div class="script-body preview">${s}</div>
+              <div class="script-body preview">${escapeHtml(s)}</div>
             </div>
           `).join('')}
         </div>
