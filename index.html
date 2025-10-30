@@ -10,21 +10,24 @@
       --panel: #121821;
       --accent: #3b82f6;
       --text: #e5e7eb;
-      --muted: #94a3b8;
+      --muted: #cbd5e1;
       --border: #1f2937;
       --success: #22c55e;
       --danger: #ef4444;
       --yellow: #f59e0b;
       /* Glassmorphism variables */
-      --glass-bg: rgba(17, 25, 40, 0.46);
-      --glass-border: rgba(255, 255, 255, 0.18);
+      --glass-bg: rgba(17, 25, 40, 0.22);
+      --glass-border: rgba(255, 255, 255, 0.16);
       --glass-shadow: 0 10px 30px rgba(2, 8, 23, 0.50);
-      --glass-blur: 16px;
-      --glass-sat: 190%;
+      --glass-blur: 12px;
+      --glass-sat: 160%;
       --glass-highlight: rgba(255, 255, 255, 0.08);
       /* Liquid Glass tint & inner shadow */
       --glass-tint: rgba(59,130,246,0.10);
       --glass-inner-shadow: rgba(2,8,23,0.55);
+      /* Noise overlay */
+      --glass-noise-opacity: 0.06;
+      /* SVG displacement removed; keeping static frosted glass */
       --text-strong: #f1f5f9;
     }
 
@@ -32,7 +35,7 @@
     html, body { height: 100%; }
     body {
       margin: 0;
-      background: linear-gradient(180deg, #0b0f14, #0e141b 40%, #0b0f14);
+      background: linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)), url('https://w.wallhaven.cc/full/3l/wallhaven-3lxqk6.jpg') center / cover no-repeat fixed;
       color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Microsoft YaHei", "PingFang SC", "Noto Sans", sans-serif;
     }
@@ -100,8 +103,12 @@
       border-radius: inherit;
       pointer-events: none;
       background:
-        radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 60%),
-        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+        /* Diagonal glare band for liquid reflection */
+        linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 28%, rgba(255,255,255,0.0) 60%),
+        /* Corner highlight */
+        radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 58%),
+        /* Soft top gloss */
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
       mix-blend-mode: screen;
     }
 
@@ -113,10 +120,32 @@
       border-radius: inherit;
       pointer-events: none;
       background:
-        radial-gradient(140% 140% at 30% 20%, var(--glass-tint), rgba(255,255,255,0)),
-        radial-gradient(120% 120% at 70% 80%, rgba(255,255,255,0.06), rgba(255,255,255,0));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -18px 40px var(--glass-inner-shadow);
+        /* Dynamic noise overlays for stronger distortion */
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="2" seed="7"/></filter><rect width="180" height="180" filter="url(%23n)" opacity="0.07"/></svg>'),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.0" numOctaves="2" seed="3"/></filter><rect width="220" height="220" filter="url(%23n)" opacity="0.06"/></svg>'),
+        /* Tint pool */
+        radial-gradient(160% 160% at 28% 18%, var(--glass-tint), rgba(255,255,255,0)),
+        /* Specular top gloss */
+        linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 35%),
+        /* Bottom soft reflection */
+        radial-gradient(120% 120% at 70% 85%, rgba(255,255,255,0.06), rgba(255,255,255,0));
+      /* Distortion removed for clearer, static frosted glass */
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.22),
+        inset 0 -22px 48px var(--glass-inner-shadow),
+        inset 0 0 28px rgba(2,8,23,0.35);
       mix-blend-mode: soft-light;
+      background-size: 220px 220px, 260px 260px, auto, auto, auto;
+      background-repeat: repeat, repeat, no-repeat, no-repeat, no-repeat;
+      background-position: 0 0, 40px -20px, center, center, center;
+      animation: none;
+    }
+
+    /* Dynamic distortion animation (low amplitude for subtle shimmer) */
+    @keyframes noiseShift {
+      0%   { background-position:   0px   0px,  40px -20px, center, center, center; }
+      50%  { background-position: -60px  40px, -20px  80px, center, center, center; }
+      100% { background-position: -120px 120px,  60px -40px, center, center, center; }
     }
 
     .section { margin-bottom: 14px; }
@@ -125,14 +154,18 @@
 
     .input, textarea, select {
       width: 100%;
-      background: var(--glass-bg);
+      background-color: var(--glass-bg);
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3"/></filter><rect width="120" height="120" filter="url(%23n)" opacity="0.04"/></svg>');
+      background-size: 160px 160px;
+      background-repeat: repeat;
       color: var(--text);
       border: 1px solid var(--glass-border);
       border-radius: 14px;
       padding: 10px 12px;
       backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
       -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-      box-shadow: var(--glass-shadow);
+      background-clip: padding-box;
+      box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -14px 28px var(--glass-inner-shadow);
     }
     /* Enhanced rounded style for native select */
     select {
@@ -142,11 +175,13 @@
       -moz-appearance: none;
       appearance: none;
       background-color: var(--glass-bg);
-      /* Custom caret icon */
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="%239aa4b2" d="M7 10l5 5 5-5"/></svg>');
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 16px 16px;
+      /* Noise overlay + custom caret icon */
+      background-image:
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="4"/></filter><rect width="120" height="120" filter="url(%23n)" opacity="0.04"/></svg>'),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="%23cbd5e1" d="M7 10l5 5 5-5"/></svg>');
+      background-repeat: repeat, no-repeat;
+      background-position: left top, right 10px center;
+      background-size: 160px 160px, 16px 16px;
       padding-right: 36px; /* room for caret */
       padding-top: 8px;
       padding-bottom: 8px;
@@ -159,6 +194,34 @@
     select.error, textarea.error { border-color: rgba(239,68,68,0.75); box-shadow: 0 0 0 1.5px rgba(239,68,68,0.35), var(--glass-shadow); animation: field-flash .6s ease; }
     select:disabled { opacity: .6; cursor: not-allowed; }
     select option { background: rgba(17,25,40,0.92); color: var(--text); }
+
+    /* Override: strengthen and animate input noise distortion */
+    .input, textarea {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.05" numOctaves="2" seed="6"/></filter><rect width="140" height="140" filter="url(%23n)" opacity="0.045"/></svg>');
+      background-position: 0 0;
+      animation: none;
+    }
+    /* High-contrast placeholders for better readability */
+    .input::placeholder, textarea::placeholder, .token-input-field::placeholder {
+      color: var(--muted);
+      opacity: 0.95;
+    }
+
+    /* Override: strengthen and animate select noise while preserving caret */
+    select {
+      background-image:
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.05" numOctaves="2" seed="8"/></filter><rect width="140" height="140" filter="url(%23n)" opacity="0.045"/></svg>'),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="%239aa4b2" d="M7 10l5 5 5-5"/></svg>');
+      background-position: left top, right 10px center;
+      animation: none;
+    }
+
+    /* Slower, subtler noise animation for inputs/selects */
+    @keyframes noiseShiftInputs {
+      0%   { background-position: 0px 0px, right 10px center; }
+      50%  { background-position: -36px 24px, right 10px center; }
+      100% { background-position: -72px 72px, right 10px center; }
+    }
     .badge { display: inline-block; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--muted); margin-left: 6px; vertical-align: middle; }
     .badge.required { color: var(--yellow); }
     .badge.optional { color: var(--muted); }
@@ -254,8 +317,28 @@
     .script-block { margin-top: 10px; }
     .script-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
     .script-title { font-weight:600; color:#a7f3d0; }
-    .script-body { position:relative; background: var(--glass-bg); border:1px solid var(--glass-border); border-radius: 14px; padding:10px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); box-shadow: var(--glass-shadow); overflow:hidden; }
+    .script-body { position:relative; background-color: var(--glass-bg); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="5"/></filter><rect width="120" height="120" filter="url(%23n)" opacity="0.05"/></svg>'); background-size: 160px 160px; background-repeat: repeat; border:1px solid var(--glass-border); border-radius: 14px; padding:10px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); box-shadow: var(--glass-shadow); overflow:hidden; }
     .script-body::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0)); mix-blend-mode: screen; }
+    .script-body::after { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:
+      /* Dual noise overlays for stronger distortion on cards */
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="2" seed="9"/></filter><rect width="180" height="180" filter="url(%23n)" opacity="0.07"/></svg>'),
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.0" numOctaves="2" seed="11"/></filter><rect width="220" height="220" filter="url(%23n)" opacity="0.06"/></svg>'),
+      radial-gradient(160% 160% at 28% 18%, var(--glass-tint), rgba(255,255,255,0)),
+      linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 35%),
+      radial-gradient(120% 120% at 70% 85%, rgba(255,255,255,0.06), rgba(255,255,255,0));
+      /* Distortion removed for clearer, static frosted glass */
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -18px 40px var(--glass-inner-shadow), inset 0 0 22px rgba(2,8,23,0.30);
+      mix-blend-mode: soft-light;
+      background-size: 220px 220px, 260px 260px, auto, auto, auto;
+      background-repeat: repeat, repeat, no-repeat, no-repeat, no-repeat;
+      background-position: 0 0, 36px -18px, center, center, center;
+      animation: none; }
+
+    @keyframes noiseShiftCards {
+      0%   { background-position:   0px   0px,  36px -18px, center, center, center; }
+      50%  { background-position: -48px  36px, -18px  72px, center, center, center; }
+      100% { background-position: -96px  96px,  48px -36px, center, center, center; }
+    }
     .script-actions { display:flex; gap:8px; }
     .script-index { color:#a7f3d0; font-weight:600; }
 
@@ -272,7 +355,7 @@
     .checkbox input:checked + .mark::after { content:""; position:absolute; left:4px; top:2px; width:4px; height:8px; border-right:2px solid #fff; border-bottom:2px solid #fff; transform: rotate(45deg); }
     /* 置灰：当复选框禁用时，降低颜色和可交互提示 */
     .checkbox input:disabled + .mark { opacity: .6; filter: grayscale(70%); border-color: rgba(255,255,255,0.08); background: rgba(17,25,40,0.55); cursor: not-allowed; }
-    .checkbox input:disabled ~ .small { color: #8b93a4; cursor: not-allowed; }
+    .checkbox input:disabled ~ .small { color: #a8b1c3; cursor: not-allowed; }
     .error-text { color:#ef4444; font-size:12px; margin-top:6px; }
     .token-input.disabled { opacity:.65; cursor:not-allowed; }
     .token-input.disabled .x, .token-input.disabled .add { pointer-events:none; opacity:.4; }
@@ -371,7 +454,7 @@ npm run dev
 
 ### 产品信息（两列网格）
 - 布局：`grid-template-columns: 1fr 1fr; gap: 12px;`。
-- 左列：`产品名称`、`产品卖点（主/副/自定义）`、`适用人群`。
+    - 左列：`产品名称`、`产品卖点（主/副）`、`适用人群`。
 - 右列：`用户痛点`、`促销折扣`、`适用场景`。
 
 #### 产品名称（必填）
@@ -381,7 +464,7 @@ npm run dev
 #### 卖点输入（chips + 建议）
 - 主卖点（必填）：标签输入组件（见下文组件规范），总字数上限 50。
 - 副卖点（选填）：有独立“启用”开关；关闭后不可编辑且不显示建议；字数上限 50。
-- 自定义卖点（选填）：有独立“启用”开关；关闭后不可编辑且不显示建议；字数上限 50。
+    - （已移除）自定义卖点。
 
 #### 适用人群（选填，最多 1 项）
 - 标签输入组件；最多保留 1 个 chip；字数上限 20。
@@ -453,7 +536,7 @@ npm run dev
 1) 在 `输入商品信息` 填写产品文本 → 失焦触发解析 → 显示加载 → 加载结束后各模块出现建议 chips。
 2) 在 `产品名称` 填写名称（≤30 字）。
 3) 在 `主卖点` 输入若干关键词，回车或逗号提交，或直接点击建议 chips 加入（占用总字数，不重复）。
-4) 可按需启用 `副卖点` / `自定义卖点`，方式同上；可在 `适用人群` 选择 1 项（新增替换旧值）。
+4) 可按需启用 `副卖点`，方式同上；可在 `适用人群` 选择 1 项（新增替换旧值）。
 5) 若选择 `痛点` 风格，则在 `用户痛点` 至少加入 1 项；选择 `权益价格` 风格，则在 `促销折扣` 至少加入 1 项。
 6) 选择 `字数` 与 `生成个数` → 点击 `生成脚本` → 进度条运行 → 生成完成显示卡片，可复制/导出。
 
@@ -474,7 +557,6 @@ npm run dev
       price: '',
       mainFeatures: [],    // 主卖点
       secondaryFeatures: [], // 副卖点
-      customFeatures: [],    // 自定义卖点
       people: [],
       pains: [],
       promotions: [],
@@ -496,7 +578,7 @@ npm run dev
       variationCount: 3,
       scripts: [],
       progress: 0,
-      enabled: { features: true, people: false, pains: false, promotions: false, scenes: false, secondaryFeatures: false, customFeatures: false },
+      enabled: { features: true, people: false, pains: false, promotions: false, scenes: false, secondaryFeatures: false },
       errors: {},
       notification: { text: '', visible: false, type: 'error' }
     };
@@ -571,15 +653,14 @@ npm run dev
     ];
 
     function oneScript(info, opts, variant = 0) {
-      const { productName, price, mainFeatures = [], secondaryFeatures = [], customFeatures = [], pains = [], scenes = [], people = [], promotions = [] } = info;
+      const { productName, price, mainFeatures = [], secondaryFeatures = [], pains = [], scenes = [], people = [], promotions = [] } = info;
       const { charCount, template } = opts;
 
-      // 依据启用状态决定是否包含副卖点与自定义卖点
-      const enabled = info.__enabled || { features: true, scenes: true, people: true, pains: true, promotions: true, secondaryFeatures: true, customFeatures: true };
+        // 依据启用状态决定是否包含副卖点
+      const enabled = info.__enabled || { features: true, scenes: true, people: true, pains: true, promotions: true, secondaryFeatures: true };
       const rawAllFeatures = Array.from(new Set([
         ...(mainFeatures || []),
-        ...(enabled.secondaryFeatures ? (secondaryFeatures || []) : []),
-        ...(enabled.customFeatures ? (customFeatures || []) : [])
+        ...(enabled.secondaryFeatures ? (secondaryFeatures || []) : [])
       ]));
       const allFeatures = rawAllFeatures;
       const audienceText = (people || []).join('、');
@@ -781,8 +862,7 @@ npm run dev
     function structureLabels() {
       const labels = [];
       const featuresCount = (state.info.mainFeatures || []).length
-        + (state.enabled.secondaryFeatures ? ((state.info.secondaryFeatures || []).length) : 0)
-        + (state.enabled.customFeatures ? ((state.info.customFeatures || []).length) : 0);
+        + (state.enabled.secondaryFeatures ? ((state.info.secondaryFeatures || []).length) : 0);
       if (state.opts.template === 'pain') {
         if (state.enabled.pains && (state.info.pains || []).length) labels.push('直击痛点');
         labels.push('解决方案');
@@ -934,7 +1014,7 @@ npm run dev
     function toggleAllOptional(checked) {
       const requiredPains = state.opts.template === 'pain';
       const requiredPromotions = state.opts.template === 'benefit_price';
-      const keys = ['secondaryFeatures','customFeatures','people','scenes'];
+      const keys = ['secondaryFeatures','people','scenes'];
       if (!requiredPains) keys.push('pains');
       if (!requiredPromotions) keys.push('promotions');
       for (let i = 0; i < keys.length; i++) {
@@ -950,7 +1030,7 @@ npm run dev
       if (requiredPains) state.enabled.pains = true;
       if (requiredPromotions) state.enabled.promotions = true;
       // 计算“全选（选填）”的三态
-      const toggleableKeys = ['secondaryFeatures','customFeatures','people','scenes']
+      const toggleableKeys = ['secondaryFeatures','people','scenes']
         .concat(requiredPains ? [] : ['pains'])
         .concat(requiredPromotions ? [] : ['promotions']);
       const selectedCount = toggleableKeys.filter(k => state.enabled[k]).length;
@@ -979,11 +1059,6 @@ npm run dev
             <div>
               <div class="label">副卖点 <span class="badge optional">选填</span></div>
               <div id="secondary-features-input"></div>
-            </div>` : ''}
-            ${state.enabled.customFeatures ? `
-            <div>
-              <div class="label">自定义卖点 <span class="badge optional">选填</span></div>
-              <div id="custom-features-input"></div>
             </div>` : ''}
           </div>
         </div>
@@ -1122,13 +1197,12 @@ npm run dev
             <label class="checkbox"><input type="checkbox" checked disabled /><span class="mark"></span><span class="small">产品名称（必选）</span></label>
             <label class="checkbox"><input type="checkbox" checked disabled /><span class="mark"></span><span class="small">主卖点（必选）</span></label>
             <label class="checkbox"><input type="checkbox" ${state.enabled.secondaryFeatures ? 'checked' : ''} onchange="state.enabled.secondaryFeatures=this.checked; render()" /><span class="mark"></span><span class="small">副卖点（选填）</span></label>
-            <label class="checkbox"><input type="checkbox" ${state.enabled.customFeatures ? 'checked' : ''} onchange="state.enabled.customFeatures=this.checked; render()" /><span class="mark"></span><span class="small">自定义卖点（选填）</span></label>
             <label class="checkbox"><input type="checkbox" ${state.enabled.people ? 'checked' : ''} onchange="state.enabled.people=this.checked; render()" /><span class="mark"></span><span class="small">适用人群（选填）</span></label>
             <label class="checkbox"><input type="checkbox" ${state.enabled.scenes ? 'checked' : ''} onchange="state.enabled.scenes=this.checked; render()" /><span class="mark"></span><span class="small">适用场景（选填）</span></label>
             <label class="checkbox"><input type="checkbox" ${state.enabled.pains ? 'checked' : ''} ${requiredPains ? 'disabled' : ''} onchange="state.enabled.pains=this.checked; render()" /><span class="mark"></span><span class="small">用户痛点（${requiredPains ? '必选' : '选填'}）</span></label>
             <label class="checkbox"><input type="checkbox" ${state.enabled.promotions ? 'checked' : ''} ${requiredPromotions ? 'disabled' : ''} onchange="state.enabled.promotions=this.checked; render()" /><span class="mark"></span><span class="small">促销折扣（${requiredPromotions ? '必选' : '选填'}）</span></label>
           </div>
-          <div class="small" style="margin-top:6px; color:#666;">必填字段已默认选中且不可取消；勾选的选填字段会在下方显示。</div>
+  <div class="small" style="margin-top:6px; color: var(--muted);">必填字段已默认选中且不可取消；勾选的选填字段会在下方显示。</div>
         </div>
       `;
 
@@ -1229,18 +1303,6 @@ npm run dev
         50
       );
 
-      const elCustom = document.getElementById('custom-features-input');
-      if (elCustom) createTagInput(
-        elCustom,
-        state.info.customFeatures || [],
-        (v) => { state.info.customFeatures = v; },
-        '输入后按回车添加',
-        [],
-        (!state.enabled.customFeatures),
-        '',
-        null,
-        50
-      );
 
       const elPeople = document.getElementById('people-input');
       if (elPeople) createTagInput(
